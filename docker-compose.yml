@@ -1,0 +1,12 @@
+version: "3.8"
+
+services:
+  cowrie:
+    build: ./honeypot/cowrie
+    container_name: cowrie_honeypot
+    ports:
+      - "2222:2222"
+      - "2223:2223"
+    volumes:
+      - ./data/logs/cowrie:/var/log/cowrie
+    restart: unless-stopped
