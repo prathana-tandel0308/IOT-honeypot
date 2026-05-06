@@ -179,15 +179,14 @@ Room 304: Maria Garcia   | HR: 68 | BP: 118/76 | O2: 99%
 
 **Required:**
 - [ ] `01-system-environment.png`
-- [ ] `02-project-structure.png`
-- [ ] `03-cowrie-config.png`
-- [ ] `04-userdb-credentials.png`
-- [ ] `05-honeypot-build.png`
-- [ ] `06-docker-running.png`
-- [ ] `07-ssh-login-success.png`
-- [ ] `08-cowrie-logs.png`
-- [ ] `09-fake-patient-records.png`
-- [ ] `10-week1-architecture.png`
+- [ ] `02-cowrie-config.png`
+- [ ] `03-userdb-credentials.png`
+- [ ] `04-honeypot-build.png`
+- [ ] `05-docker-running.png`
+- [ ] `06-ssh-login-success.png`
+- [ ] `07-cowrie-logs.png`
+- [ ] `08-fake-patient-records.png`
+
 
 ## 📊 Week 1 Deliverables
 
