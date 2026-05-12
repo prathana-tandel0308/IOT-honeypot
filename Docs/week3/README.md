@@ -1,8 +1,3 @@
-
-# Project Title
-
-A brief description of what this project does and who it's for
-
 # 🛡️ Week 3 — Log Parsing and Threat Intelligence Extraction  
 
 ## 📌 Week 3 Overview  
