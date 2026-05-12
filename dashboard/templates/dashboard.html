@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Honeypot Security Dashboard | Threat Intelligence</title>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0a0e1a 0%, #0f1420 50%, #0a0e1a 100%);
+            color: #e0e4f0;
+            overflow-x: hidden;
+        }
+
+        /* Animated background particles */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .particle {
+            position: absolute;
+            background: radial-gradient(circle, rgba(0, 255, 255, 0.1) 0%, rgba(0, 255, 255, 0) 70%);
+            border-radius: 50%;
+            animation: float 20s infinite linear;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.3;
+            }
+            90% {
+                opacity: 0.3;
+            }
+            100% {
+                transform: translateY(-100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            border-bottom: 2px solid rgba(0, 255, 255, 0.2);
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+        }
+
+        .logo h1 {
+            font-size: 28px;
+            background: linear-gradient(135deg, #00ffff, #ff00ff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            font-weight: 800;
+        }
+
+        .logo p {
+            font-size: 12px;
+            color: #6c7a8f;
+            margin-top: 5px;
+        }
+
+        .badge {
+            background: rgba(0, 255, 255, 0.1);
+            padding: 10px 20px;
+            border-radius: 20px;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            font-size: 14px;
+        }
+
+        .badge i {
+            color: #00ff00;
+            margin-right: 8px;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: rgba(15, 20, 32, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 20px;
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.1), transparent);
+            transition: left 0.5s;
+        }
+
+        .stat-card:hover::before {
+            left: 100%;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(0, 255, 255, 0.5);
+            box-shadow: 0 10px 30px rgba(0, 255, 255, 0.1);
+        }
+
+        .stat-icon {
+            font-size: 35px;
+            margin-bottom: 15px;
+            color: #00ffff;
+        }
+
+        .stat-value {
+            font-size: 36px;
+            font-weight: 800;
+            margin-bottom: 5px;
+            background: linear-gradient(135deg, #fff, #00ffff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #8a98b0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Time Range Selector */
+        .time-range {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            justify-content: flex-end;
+        }
+
+        .range-btn {
+            background: rgba(20, 25, 40, 0.8);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            color: #c0c8e0;
+            padding: 8px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .range-btn:hover, .range-btn.active {
+            background: linear-gradient(135deg, rgba(0, 255, 255, 0.2), rgba(255, 0, 255, 0.2));
+            border-color: #00ffff;
+            color: #00ffff;
+            transform: translateY(-2px);
+        }
+
+        /* Charts Grid */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .chart-card {
+            background: rgba(15, 20, 32, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 20px;
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            transition: all 0.3s;
+        }
+
+        .chart-card:hover {
+            border-color: rgba(0, 255, 255, 0.4);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .chart-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(0, 255, 255, 0.2);
+        }
+
+        .chart-title i {
+            margin-right: 10px;
+            color: #00ffff;
+        }
+
+        canvas {
+            max-height: 300px;
+            width: 100%;
+        }
+
+        /* Tables */
+        .table-section {
+            background: rgba(15, 20, 32, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 20px;
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            margin-bottom: 30px;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(0, 255, 255, 0.2);
+        }
+
+        .table-header h3 {
+            font-size: 18px;
+        }
+
+        .table-header i {
+            color: #00ffff;
+            margin-right: 10px;
+        }
+
+        .attack-table {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            text-align: left;
+            padding: 12px;
+            background: rgba(0, 255, 255, 0.1);
+            color: #00ffff;
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.1);
+            font-size: 13px;
+        }
+
+        tr:hover {
+            background: rgba(0, 255, 255, 0.05);
+            transition: all 0.3s;
+        }
+
+        .attack-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .attack-badge.ssh {
+            background: rgba(255, 0, 0, 0.2);
+            color: #ff4444;
+            border: 1px solid rgba(255, 0, 0, 0.3);
+        }
+
+        .attack-badge.http {
+            background: rgba(0, 255, 0, 0.2);
+            color: #00ff00;
+            border: 1px solid rgba(0, 255, 0, 0.3);
+        }
+
+        .attack-badge.telnet {
+            background: rgba(255, 165, 0, 0.2);
+            color: #ffa500;
+            border: 1px solid rgba(255, 165, 0, 0.3);
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #0a0e1a;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #00ffff;
+            border-radius: 4px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            .header {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+
+        /* Loading animation */
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #00ffff;
+        }
+
+        .error {
+            color: #ff4444;
+            text-align: center;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="particles" id="particles"></div>
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                <h1><i class="fas fa-shield-haltered"></i> Honeypot Sentinel</h1>
+                <p>Real-time Threat Intelligence & Attack Analysis</p>
+            </div>
+            <div class="badge">
+                <i class="fas fa-circle"></i> Active Monitoring
+                <span id="timestamp" style="display: block; font-size: 11px; margin-top: 5px;"></span>
+            </div>
+        </div>
+
+        <div class="time-range">
+            <button class="range-btn" data-range="1h">1 Hour</button>
+            <button class="range-btn active" data-range="24h">24 Hours</button>
+            <button class="range-btn" data-range="7d">7 Days</button>
+            <button class="range-btn" data-range="30d">30 Days</button>
+        </div>
+
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-bug"></i></div>
+                <div class="stat-value" id="totalAttacks">-</div>
+                <div class="stat-label">Total Attacks</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-user-secret"></i></div>
+                <div class="stat-value" id="uniqueAttackers">-</div>
+                <div class="stat-label">Unique Attackers</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-globe"></i></div>
+                <div class="stat-value" id="countries">-</div>
+                <div class="stat-label">Countries</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-chart-line"></i></div>
+                <div class="stat-value" id="attackRate">-</div>
+                <div class="stat-label">Attacks/Hour</div>
+            </div>
+        </div>
+
+        <div class="charts-grid">
+            <div class="chart-card">
+                <div class="chart-title"><i class="fas fa-chart-line"></i> Attack Timeline</div>
+                <canvas id="timelineChart"></canvas>
+            </div>
+            <div class="chart-card">
+                <div class="chart-title"><i class="fas fa-chart-pie"></i> Attack Types Distribution</div>
+                <canvas id="attackTypesChart"></canvas>
+            </div>
+            <div class="chart-card">
+                <div class="chart-title"><i class="fas fa-chart-bar"></i> Top Attack Sources</div>
+                <canvas id="topIpsChart"></canvas>
+            </div>
+            <div class="chart-card">
+                <div class="chart-title"><i class="fas fa-chart-bar"></i> Most Targeted Usernames</div>
+                <canvas id="topUsernamesChart"></canvas>
+            </div>
+        </div>
+
+        <div class="table-section">
+            <div class="table-header">
+                <h3><i class="fas fa-clock"></i> Recent Attacks (Last Hour)</h3>
+                <i class="fas fa-sync-alt" id="refreshIcon" style="cursor: pointer;"></i>
+            </div>
+            <div class="attack-table">
+                <table id="recentAttacksTable">
+                    <thead>
+                        <tr><th>Timestamp</th><th>Source IP</th><th>Country</th><th>Username</th><th>Attack Type</th></tr>
+                    </thead>
+                    <tbody id="recentAttacksBody">
+                        <tr><td colspan="5" class="loading">Loading attacks...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let timelineChart, attackTypesChart, topIpsChart, topUsernamesChart;
+        let currentRange = '24h';
+        let updateInterval;
+
+        // Generate particles
+        function generateParticles() {
+            const particlesContainer = document.getElementById('particles');
+            for(let i = 0; i < 50; i++) {
+                const particle = document.createElement('div');
+                particle.classList.add('particle');
+                const size = Math.random() * 4 + 1;
+                particle.style.width = size + 'px';
+                particle.style.height = size + 'px';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 20 + 's';
+                particle.style.animationDuration = 15 + Math.random() * 10 + 's';
+                particlesContainer.appendChild(particle);
+            }
+        }
+
+        // Initialize charts
+        function initCharts() {
+            const chartOptions = {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        labels: { color: '#c0c8e0', font: { size: 11 } }
+                    }
+                }
+            };
+
+            timelineChart = new Chart(document.getElementById('timelineChart'), {
+                type: 'line',
+                data: { labels: [], datasets: [{ label: 'Attacks', data: [], borderColor: '#00ffff', backgroundColor: 'rgba(0, 255, 255, 0.1)', tension: 0.4, fill: true }] },
+                options: { ...chartOptions, responsive: true }
+            });
+
+            attackTypesChart = new Chart(document.getElementById('attackTypesChart'), {
+                type: 'doughnut',
+                data: { labels: [], datasets: [{ data: [], backgroundColor: ['#00ffff', '#ff00ff', '#00ff00', '#ffaa00', '#ff4444', '#44ff44', '#ff44ff'], borderWidth: 0 }] },
+                options: chartOptions
+            });
+
+            topIpsChart = new Chart(document.getElementById('topIpsChart'), {
+                type: 'bar',
+                data: { labels: [], datasets: [{ label: 'Attacks', data: [], backgroundColor: 'rgba(0, 255, 255, 0.6)', borderColor: '#00ffff', borderWidth: 1 }] },
+                options: { ...chartOptions, indexAxis: 'y', responsive: true }
+            });
+
+            topUsernamesChart = new Chart(document.getElementById('topUsernamesChart'), {
+                type: 'bar',
+                data: { labels: [], datasets: [{ label: 'Attempts', data: [], backgroundColor: 'rgba(255, 0, 255, 0.6)', borderColor: '#ff00ff', borderWidth: 1 }] },
+                options: { ...chartOptions, indexAxis: 'y', responsive: true }
+            });
+        }
+
+        // Update dashboard data
+        async function updateDashboard() {
+            try {
+                const response = await fetch(`/api/stats?range=${currentRange}`);
+                const data = await response.json();
+                
+                if (data.error) throw new Error(data.error);
+                
+                // Update stats
+                document.getElementById('totalAttacks').textContent = data.total_attacks?.toLocaleString() || '0';
+                document.getElementById('uniqueAttackers').textContent = data.unique_attackers?.toLocaleString() || '0';
+                document.getElementById('countries').textContent = data.countries?.toLocaleString() || '0';
+                
+                // Calculate attack rate
+                const rate = data.total_attacks && data.timeline?.length ? Math.round(data.total_attacks / data.timeline.length) : 0;
+                document.getElementById('attackRate').textContent = rate.toLocaleString();
+                
+                // Update timeline chart
+                timelineChart.data.labels = data.timeline?.map(t => new Date(t.timestamp).toLocaleTimeString()) || [];
+                timelineChart.data.datasets[0].data = data.timeline?.map(t => t.count) || [];
+                timelineChart.update();
+                
+                // Update attack types chart
+                attackTypesChart.data.labels = data.attack_types?.map(t => t.name) || [];
+                attackTypesChart.data.datasets[0].data = data.attack_types?.map(t => t.count) || [];
+                attackTypesChart.update();
+                
+                // Update top IPs chart
+                topIpsChart.data.labels = data.top_ips?.slice(0, 10).map(ip => ip.ip) || [];
+                topIpsChart.data.datasets[0].data = data.top_ips?.slice(0, 10).map(ip => ip.count) || [];
+                topIpsChart.update();
+                
+                // Update top usernames chart
+                topUsernamesChart.data.labels = data.top_usernames?.slice(0, 10).map(u => u.username || '(empty)') || [];
+                topUsernamesChart.data.datasets[0].data = data.top_usernames?.slice(0, 10).map(u => u.count) || [];
+                topUsernamesChart.update();
+                
+                // Update recent attacks
+                await updateRecentAttacks();
+                
+                // Update timestamp
+                document.getElementById('timestamp').textContent = new Date().toLocaleString();
+                
+            } catch (error) {
+                console.error('Error updating dashboard:', error);
+            }
+        }
+        
+        async function updateRecentAttacks() {
+            try {
+                const response = await fetch('/api/recent_attacks');
+                const attacks = await response.json();
+                
+                if (attacks.error) throw new Error(attacks.error);
+                
+                const tbody = document.getElementById('recentAttacksBody');
+                if (!attacks.length) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="loading">No recent attacks</td></tr>';
+                    return;
+                }
+                
+                tbody.innerHTML = attacks.map(attack => `
+                    <tr>
+                        <td style="font-size: 11px;">${new Date(attack.timestamp).toLocaleString()}</td>
+                        <td><code>${attack.src_ip}</code></td>
+                        <td>${attack.country}</td>
+                        <td><code>${attack.username || '-'}</code></td>
+                        <td><span class="attack-badge ${attack.attack_type}">${attack.attack_type.toUpperCase()}</span></td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error updating recent attacks:', error);
+            }
+        }
+        
+        // Socket.io connection
+        const socket = io();
+        socket.on('connect', () => {
+            console.log('Connected to WebSocket');
+            updateDashboard();
+        });
+        
+        socket.on('connected', (data) => {
+            console.log('Server says:', data);
+        });
+        
+        // Time range buttons
+        document.querySelectorAll('.range-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.range-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentRange = btn.dataset.range;
+                updateDashboard();
+            });
+        });
+        
+        // Refresh button
+        document.getElementById('refreshIcon').addEventListener('click', () => {
+            updateDashboard();
+        });
+        
+        // Auto-refresh every 10 seconds
+        setInterval(() => {
+            updateDashboard();
+        }, 10000);
+        
+        // Initialize
+        generateParticles();
+        initCharts();
+        updateDashboard();
+    </script>
+</body>
+</html>
