@@ -8,7 +8,7 @@ from elasticsearch import Elasticsearch
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY","dev-secret")
 socketio = SocketIO(app, cors_allowed_origins="*")
-es = Elasticsearch([os.getenv("ELASTICSEARCH_HOST","http://localhost:9200")])
+es = Elasticsearch([os.getenv("ELASTICSEARCH_HOST","http://localhost:9201")])
 RANGE_MAP = {"1h":"now-1h","24h":"now-24h","7d":"now-7d","30d":"now-30d"}
 
 @app.route("/")
