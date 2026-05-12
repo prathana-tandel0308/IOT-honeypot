@@ -1,0 +1,15 @@
+{
+  "generated_at": "2026-05-12T14:08:46.377170",
+  "summary": {
+    "unique_ips": 0,
+    "unique_usernames": 0,
+    "unique_passwords": 0,
+    "total_commands": 0,
+    "malware_samples": 0
+  },
+  "top_attackers": [],
+  "top_usernames": [],
+  "top_passwords": [],
+  "recent_commands": [],
+  "malware_hashes": []
+}
