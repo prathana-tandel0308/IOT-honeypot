@@ -1,8 +1,3 @@
-
-# Project Title
-
-A brief description of what this project does and who it's for
-
 # 📊 Week 4: Dashboarding and Geolocation Analysis
 
 ## 📌 Overview
